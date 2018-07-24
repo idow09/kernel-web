@@ -22,7 +22,6 @@ module_param(KiB, uint, S_IRUGO);
 #else
     #define KWEBMSG(_msg,args...) /* print nothing */
 #endif
-#define _KWEBMSG(_msg,args...) /* print nothing */
 
 int start = 0;
 
@@ -87,11 +86,11 @@ static void connection_handler(struct work_struct * ignore)
         /* Always relaunch after 5 sec, so it wouldn't block 'kweb_module_cleanup'*/
 
         if (rc == 0) {
-            _KWEBMSG("Time Out\n");
+            KWEBMSG("Time Out\n");
             continue;
         }
 
-        _KWEBMSG("%d,%d\n",rc,s_status);
+        KWEBMSG("%d,%d\n",rc,s_status);
 
         rc = kernel_getpeername(newsock, (struct sockaddr *)&peeraddr, &len);
         client_ip = inet_ntoa(peeraddr.sin_addr);
@@ -111,16 +110,13 @@ static void connection_handler(struct work_struct * ignore)
 void http_server(struct socket *csocket)
 {
     char *request;
-    char *response;
 
-    int length,i;
+    int length;
     struct msghdr msg;
     struct kvec iov;
 
     request = kmalloc(BUFFSIZE, GFP_KERNEL);
     memset(request, 0, BUFFSIZE);
-    response = kmalloc(BUFFSIZE, GFP_KERNEL);
-    memset(response, 0, BUFFSIZE);
 
     iov.iov_base = (void *)request;
     iov.iov_len = (__kernel_size_t)BUFFSIZE;
@@ -143,26 +139,16 @@ void http_server(struct socket *csocket)
         KWEBMSG( "Read from socket failed\n");
     }
     else {
-        _KWEBMSG("Request:%s\n",request);
+        KWEBMSG("Request:%s\n",request);
 
-        KWEBMSG("HTTP request received\n");
+        KWEBMSG("TCP request received\n");
 
-        snprintf(response, BUFFSIZE, "HTTP/1.0 200 OK\r\n"
-            "Access-Control-Allow-Origin: *\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: %d\r\n\n",KiB*1024);
+        sendmsg(csocket,request,strlen(request),0);
 
-        sendmsg(csocket,response,strlen(response),MSG_MORE);
-        i = KiB*4;
-        while( i-- >= 0 ){
-            sendmsg(csocket,"Lorem ipsum, Ei duo fugit errem, assum minimum nam in, aeterno definitionem et per. Decore civibus luptatum ei sea. Id oblique meliore reprimique nec, dolorem ocurreret constituam mea an? Nonumy consul facilisis in has! Ex possim delenit definitiones mei.\n",256,0);
-        }
-
-        KWEBMSG("HTTP send msg(%d Kbytes)\n",KiB);
+        KWEBMSG("TCP sent msg\n");
     }
 
     kfree(request);
-    kfree(response);
 }
 
 int sendmsg(struct socket *csocket, const void *data, size_t datalength, int flags)
