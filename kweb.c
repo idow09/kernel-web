@@ -139,6 +139,8 @@ void tcp_server(struct socket *csocket)
             sendmsg(csocket,request,strlen(request),0);
 
             KWEBMSG("TCP sent msg\n");
+
+            memset(request, 0, BUFFSIZE);
     }
     kfree(request);
 }
