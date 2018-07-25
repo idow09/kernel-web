@@ -111,7 +111,6 @@ void tcp_server(struct socket *csocket)
 {
     char *request;
 
-    int length;
     struct msghdr msg;
     struct kvec iov;
 
@@ -125,29 +124,22 @@ void tcp_server(struct socket *csocket)
     msg.msg_namelen = 0;
     msg.msg_control = NULL;
     msg.msg_controllen = 0;
+    while(kernel_recvmsg(
+            csocket, /*Client socket*/
+            &msg, /*Received message*/
+            &iov, /*Input s/g array for message data(msg.msg_iov)*/
+            1, /*Size of input s/g array(msg.msg_iovlen)*/
+            BUFFSIZE, /*Number of bytes to read*/
+            0 /*Message flags*/ ))
+    {
+            KWEBMSG("Request:%s\n",request);
 
-    length = kernel_recvmsg(
-        csocket, /*Client socket*/
-        &msg, /*Received message*/
-        &iov, /*Input s/g array for message data(msg.msg_iov)*/
-        1, /*Size of input s/g array(msg.msg_iovlen)*/
-        BUFFSIZE, /*Number of bytes to read*/
-        0 /*Message flags*/ 
-    );
+            KWEBMSG("TCP request received\n");
 
-    if ( length <= 0 ) {
-        KWEBMSG( "Read from socket failed\n");
+            sendmsg(csocket,request,strlen(request),0);
+
+            KWEBMSG("TCP sent msg\n");
     }
-    else {
-        KWEBMSG("Request:%s\n",request);
-
-        KWEBMSG("TCP request received\n");
-
-        sendmsg(csocket,request,strlen(request),0);
-
-        KWEBMSG("TCP sent msg\n");
-    }
-
     kfree(request);
 }
 
