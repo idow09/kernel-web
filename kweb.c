@@ -26,7 +26,7 @@ module_param(KiB, uint, S_IRUGO);
 int start = 0;
 
 static void connection_handler(struct work_struct * ignore);
-void http_server(struct socket *csocket);
+void tcp_server(struct socket *csocket);
 char *inet_ntoa(struct in_addr in);
 int sendmsg(struct socket *csocket, const void *data, size_t datalength, int flags);
 
@@ -68,7 +68,7 @@ static void connection_handler(struct work_struct * ignore)
 
     rc = kernel_listen(sock, 0);
 
-    KWEBMSG("HTTP server listening on port:%d\n",port);
+    KWEBMSG("Server listening on port:%d\n",port);
     KWEBMSG("Waiting for client's request\n");
 
 
@@ -97,7 +97,7 @@ static void connection_handler(struct work_struct * ignore)
         KWEBMSG("Client IP:%s, Client port:%d\n", client_ip, peeraddr.sin_port);
         kfree(client_ip);
 
-        http_server(newsock);
+        tcp_server(newsock);
 
         KWEBMSG("Close client socket\n");
         if( newsock != NULL ) sock_release(newsock);
@@ -107,7 +107,7 @@ static void connection_handler(struct work_struct * ignore)
 
 }
 
-void http_server(struct socket *csocket)
+void tcp_server(struct socket *csocket)
 {
     char *request;
 
@@ -206,7 +206,7 @@ static void __exit kweb_module_cleanup(void)
 
 module_init(kweb_module_init);
 module_exit(kweb_module_cleanup);
-MODULE_DESCRIPTION("Kernel HTTP server for speed test.");
+MODULE_DESCRIPTION("Kernel TCP server.");
 MODULE_LICENSE("GPL");
 
 char *inet_ntoa(struct in_addr in)
